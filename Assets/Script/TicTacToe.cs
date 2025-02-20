@@ -19,6 +19,13 @@ public class TicTacToe : MonoBehaviour
     {
         Debug.Log("TicTacToe script started!");
 
+#if UNITY_STANDALONE
+        displayText.text = "Playing on PC";
+#elif UNITY_ANDROID
+        displayText.text = "Playing on Android - Touch Enabled";
+#endif
+
+
         ResetBoard();
 
         for (int i = 0; i < gridButtons.Length; i++)
@@ -32,6 +39,21 @@ public class TicTacToe : MonoBehaviour
         resetButton.onClick.AddListener(ResetBoard);
         backToMenuButton.onClick.RemoveAllListeners();
         backToMenuButton.onClick.AddListener(BackToMenu);
+    }
+
+    void Update()
+    {
+#if UNITY_STANDALONE
+        if (Input.GetMouseButtonDown(0)) // Left click
+        {
+            Debug.Log("Mouse Click on PC");
+        }
+#elif UNITY_ANDROID
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            Debug.Log("Touch detected on Android");
+        }
+#endif
     }
 
     public void ResetBoard()
@@ -179,6 +201,21 @@ public class TicTacToe : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    private void StrikeThrough(int a, int b, int c)
+    {
+        Image imgA = gridButtons[a].GetComponent<Image>();
+        Image imgB = gridButtons[b].GetComponent<Image>();
+        Image imgC = gridButtons[c].GetComponent<Image>();
+
+        imgA.color = Color.red;
+        imgB.color = Color.red;
+        imgC.color = Color.red;
+
+        imgA.SetAllDirty();
+        imgB.SetAllDirty();
+        imgC.SetAllDirty();
     }
 
     private bool IsDraw()
