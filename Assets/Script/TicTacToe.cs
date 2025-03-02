@@ -1,237 +1,186 @@
+using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using System.Collections.Generic;
-using UnityEngine.SceneManagement; // Required for scene management
+using UnityEngine.UI; // Required for UI components like Button
+using TMPro; // Importing TextMeshPro namespace
+using UnityEngine.SceneManagement; // For scene management
 
 public class TicTacToe : MonoBehaviour
 {
-    public Button[] gridButtons;
-    public TMP_Text displayText;
-    public Button resetButton;
-    public Button backToMenuButton;
+    public Button[] buttons; // Array of Tic-Tac-Toe buttons
+    public TMP_Text displayText; // TMP_Text component to show the status
+    public Button resetButton; // Reset button
+    public Button menuButton; // Menu button
 
-    private string currentPlayer;
-    private string[] board;
+    private string[] board; // 3x3 grid of the game
+    private string currentPlayer = "X"; // Player starts with X
     private bool gameOver = false;
 
     void Start()
     {
-        Debug.Log("TicTacToe script started!");
+        board = new string[9]; // Initialize the board
+        resetButton.onClick.AddListener(ResetGame);
+        menuButton.onClick.AddListener(GoToMenu);
+        UpdateDisplayText();
 
-#if UNITY_STANDALONE
-        displayText.text = "Playing on PC";
-#elif UNITY_ANDROID
-        displayText.text = "Playing on Android - Touch Enabled";
-#endif
-
-
-        ResetBoard();
-
-        for (int i = 0; i < gridButtons.Length; i++)
+        // Set listeners for each button
+        for (int i = 0; i < buttons.Length; i++)
         {
-            int index = i;
-            gridButtons[i].onClick.RemoveAllListeners();
-            gridButtons[i].onClick.AddListener(() => OnGridClick(index));
-        }
-
-        resetButton.onClick.RemoveAllListeners();
-        resetButton.onClick.AddListener(ResetBoard);
-        backToMenuButton.onClick.RemoveAllListeners();
-        backToMenuButton.onClick.AddListener(BackToMenu);
-    }
-
-    void Update()
-    {
-#if UNITY_STANDALONE
-        if (Input.GetMouseButtonDown(0)) // Left click
-        {
-            Debug.Log("Mouse Click on PC");
-        }
-#elif UNITY_ANDROID
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            Debug.Log("Touch detected on Android");
-        }
-#endif
-    }
-
-    public void ResetBoard()
-    {
-        gameOver = false;
-        currentPlayer = "X"; // Player starts first
-        displayText.text = "Next Player: X";
-        resetButton.gameObject.SetActive(false);
-
-        board = new string[9];
-
-        for (int i = 0; i < gridButtons.Length; i++)
-        {
-            board[i] = "";
-            TMP_Text buttonText = gridButtons[i].GetComponentInChildren<TMP_Text>();
-            if (buttonText != null)
-                buttonText.text = "";
-            gridButtons[i].GetComponent<Image>().color = Color.white;
-            gridButtons[i].interactable = true;
+            int index = i; // To capture index correctly inside the loop
+            buttons[i].onClick.AddListener(() => MakeMove(index));
         }
     }
 
-    public void OnGridClick(int index)
+    void MakeMove(int index)
     {
-        if (gameOver || !string.IsNullOrEmpty(board[index])) return;
+        if (gameOver || !string.IsNullOrEmpty(board[index]))
+            return;
 
         board[index] = currentPlayer;
-        gridButtons[index].GetComponentInChildren<TMP_Text>().text = currentPlayer;
-        gridButtons[index].interactable = false;
+        buttons[index].GetComponentInChildren<TextMeshProUGUI>().text = currentPlayer; // Using TextMeshProUGUI to update the button's text
+        buttons[index].interactable = false; // Disable the button after it's clicked
 
-        if (CheckWinner()) return;
-        if (IsDraw()) return;
+        if (CheckWinner(currentPlayer))
+        {
+            gameOver = true;
+            displayText.text = $"{currentPlayer} Wins!{GetPlatformInfo()}"; // Display winner message
+            HighlightWinningCombination(currentPlayer);
+        }
+        else if (IsBoardFull())
+        {
+            gameOver = true;
+            displayText.text = $"It's a Draw!{GetPlatformInfo()}"; // Display draw message
+        }
+        else
+        {
+            currentPlayer = (currentPlayer == "X") ? "O" : "X"; // Switch turns
+            UpdateDisplayText();
 
-        currentPlayer = "O";
-        displayText.text = "AI is Thinking...";
-
-        Invoke("MakeAIMove", 1.0f);
+            if (currentPlayer == "O") // If it's AI's turn
+            {
+                StartCoroutine(AIMove()); // AI makes its move
+            }
+        }
     }
 
-    private void MakeAIMove()
+    // Update the display text to show whose turn it is
+    void UpdateDisplayText()
     {
-        if (gameOver) return;
-
-        int bestMove = GetBestMove();
-        board[bestMove] = "O";
-        gridButtons[bestMove].GetComponentInChildren<TMP_Text>().text = "O";
-        gridButtons[bestMove].interactable = false;
-
-        if (CheckWinner()) return;
-        if (IsDraw()) return;
-
-        currentPlayer = "X";
-        displayText.text = "Next Player: X";
+        displayText.text = $"{currentPlayer}'s Turn {GetPlatformInfo()}"; // Display whose turn it is and platform info
     }
 
-    private int GetBestMove()
+    // Check if the current player has won
+    bool CheckWinner(string player)
     {
-        List<int> availableMoves = new List<int>();
+        int[][] winningCombinations = new int[][]
+        {
+            new int[] { 0, 1, 2 }, new int[] { 3, 4, 5 }, new int[] { 6, 7, 8 },
+            new int[] { 0, 3, 6 }, new int[] { 1, 4, 7 }, new int[] { 2, 5, 8 },
+            new int[] { 0, 4, 8 }, new int[] { 2, 4, 6 }
+        };
+
+        foreach (var combination in winningCombinations)
+        {
+            if (board[combination[0]] == player && board[combination[1]] == player && board[combination[2]] == player)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Check if the board is full
+    bool IsBoardFull()
+    {
+        foreach (var cell in board)
+        {
+            if (string.IsNullOrEmpty(cell))
+                return false;
+        }
+        return true;
+    }
+
+    // Highlight the winning combination
+    void HighlightWinningCombination(string player)
+    {
+        int[][] winningCombinations = new int[][]
+        {
+            new int[] { 0, 1, 2 }, new int[] { 3, 4, 5 }, new int[] { 6, 7, 8 },
+            new int[] { 0, 3, 6 }, new int[] { 1, 4, 7 }, new int[] { 2, 5, 8 },
+            new int[] { 0, 4, 8 }, new int[] { 2, 4, 6 }
+        };
+
+        foreach (var combination in winningCombinations)
+        {
+            if (board[combination[0]] == player && board[combination[1]] == player && board[combination[2]] == player)
+            {
+                // Strike-through or change color of the buttons involved in the winning combination
+                buttons[combination[0]].GetComponentInChildren<TextMeshProUGUI>().color = Color.red;
+                buttons[combination[1]].GetComponentInChildren<TextMeshProUGUI>().color = Color.red;
+                buttons[combination[2]].GetComponentInChildren<TextMeshProUGUI>().color = Color.red;
+                break;
+            }
+        }
+    }
+
+    // AI Move - Random choice for simplicity
+    IEnumerator AIMove()
+    {
+        yield return new WaitForSeconds(0.5f); // Simulate AI thinking
+
+        int index = GetRandomAvailableMove();
+        MakeMove(index);
+    }
+
+    // Get a random available move for AI
+    int GetRandomAvailableMove()
+    {
+        System.Random random = new System.Random();
+        int[] availableMoves = new int[9];
+        int count = 0;
+
         for (int i = 0; i < board.Length; i++)
         {
             if (string.IsNullOrEmpty(board[i]))
-                availableMoves.Add(i);
-        }
-
-        if (availableMoves.Count == 0) return -1;
-
-        int depthLimit = 2;
-        int bestScore = int.MinValue;
-        int move = availableMoves[Random.Range(0, availableMoves.Count)];
-
-        foreach (int i in availableMoves)
-        {
-            board[i] = "O";
-            int score = Minimax(board, 0, false, depthLimit);
-            board[i] = "";
-
-            if (score > bestScore)
             {
-                bestScore = score;
-                move = i;
+                availableMoves[count] = i;
+                count++;
             }
         }
 
-        return move;
+        return availableMoves[random.Next(0, count)];
     }
 
-    private int Minimax(string[] newBoard, int depth, bool isMaximizing, int depthLimit)
+    // Reset the game state
+    void ResetGame()
     {
-        if (depth >= depthLimit) return 0;
+        board = new string[9];
+        currentPlayer = "X";
+        gameOver = false;
+        displayText.text = ""; // Clear display text
+        UpdateDisplayText();
 
-        string result = CheckWinState();
-        if (result == "O") return 10 - depth;
-        if (result == "X") return depth - 10;
-        if (result == "Draw") return 0;
-
-        int bestScore = isMaximizing ? int.MinValue : int.MaxValue;
-        for (int i = 0; i < newBoard.Length; i++)
+        for (int i = 0; i < buttons.Length; i++)
         {
-            if (string.IsNullOrEmpty(newBoard[i]))
-            {
-                newBoard[i] = isMaximizing ? "O" : "X";
-                int score = Minimax(newBoard, depth + 1, !isMaximizing, depthLimit);
-                newBoard[i] = "";
-                bestScore = isMaximizing ? Mathf.Max(score, bestScore) : Mathf.Min(score, bestScore);
-            }
+            buttons[i].GetComponentInChildren<TextMeshProUGUI>().text = ""; // Clear button text
+            buttons[i].interactable = true; // Enable all buttons
         }
-        return bestScore;
     }
 
-    private string CheckWinState()
+    // Go to Menu scene
+    void GoToMenu()
     {
-        int[,] winPatterns = {
-            {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
-            {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
-            {0, 4, 8}, {2, 4, 6}
-        };
-
-        for (int i = 0; i < winPatterns.GetLength(0); i++)
-        {
-            int a = winPatterns[i, 0], b = winPatterns[i, 1], c = winPatterns[i, 2];
-            if (!string.IsNullOrEmpty(board[a]) && board[a] == board[b] && board[a] == board[c])
-            {
-                return board[a];
-            }
-        }
-
-        foreach (string cell in board)
-        {
-            if (string.IsNullOrEmpty(cell)) return null;
-        }
-
-        return "Draw";
+        SceneManager.LoadScene("UIManager"); // Replace "Menu" with the actual name of your menu scene
     }
 
-    private bool CheckWinner()
+    // Get platform-specific info to display
+    string GetPlatformInfo()
     {
-        string winner = CheckWinState();
-        if (winner == null) return false;
-
-        if (winner == "X" || winner == "O")
-        {
-            displayText.text = $"{winner} Wins!";
-            gameOver = true;
-            resetButton.gameObject.SetActive(true);
-            return true;
-        }
-        return false;
-    }
-
-    private void StrikeThrough(int a, int b, int c)
-    {
-        Image imgA = gridButtons[a].GetComponent<Image>();
-        Image imgB = gridButtons[b].GetComponent<Image>();
-        Image imgC = gridButtons[c].GetComponent<Image>();
-
-        imgA.color = Color.red;
-        imgB.color = Color.red;
-        imgC.color = Color.red;
-
-        imgA.SetAllDirty();
-        imgB.SetAllDirty();
-        imgC.SetAllDirty();
-    }
-
-    private bool IsDraw()
-    {
-        if (CheckWinState() == "Draw")
-        {
-            displayText.text = "It's a Draw!";
-            gameOver = true;
-            resetButton.gameObject.SetActive(true);
-            return true;
-        }
-        return false;
-    }
-
-    public void BackToMenu()
-    {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("UIScene");
+#if UNITY_STANDALONE
+        return "Playing on PC";
+#elif UNITY_ANDROID
+            return "Playing on Android - Touch Enabled";
+#else
+            return "Platform Unknown";
+#endif
     }
 }

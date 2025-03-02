@@ -1615,7 +1615,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &957869578
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2720,7 +2720,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d32e4233f491d04bb07be22fbddea3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridButtons:
+  buttons:
   - {fileID: 2019179349}
   - {fileID: 979053100}
   - {fileID: 340918468}
@@ -2732,7 +2732,7 @@ MonoBehaviour:
   - {fileID: 1221436982}
   displayText: {fileID: 424171266}
   resetButton: {fileID: 957869579}
-  backToMenuButton: {fileID: 683376844}
+  menuButton: {fileID: 683376844}
 --- !u!4 &1960148443
 Transform:
   m_ObjectHideFlags: 0
@@ -2952,6 +2952,22 @@ PrefabInstance:
     - target: {fileID: 7594419386834448223, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
       propertyPath: m_text
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496327855342499708, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496327855342499708, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496327855342499708, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1960148441}
+    - target: {fileID: 8496327855342499708, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e83e1556474a5fd49a8cc2f9b101ab36, type: 3}
